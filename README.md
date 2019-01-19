@@ -7,5 +7,5 @@ Scope: Game Reviews
 Websites (Data-Sources): Steam, YouTube, Reddit
 
 Products: 
-- Currently, we are focusing on Dark Souls 3 and No man's sky
+- Currently, we are focusing on Dark Souls 3 and No Man's Sky
 - More products to be included once the initial model is done
