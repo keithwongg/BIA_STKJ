@@ -1,0 +1,76 @@
+# information included: Published from 2017 onwards, english, gaming topic, videos only
+
+import requests
+import json
+
+def getYouTubeComments(searchTerm):
+    # get first page of search results for relevant videos
+    response = requests.get("https://www.googleapis.com/youtube/v3/search?key=AIzaSyCBBfQKeEAbfdxl9NqhpVQeolErXN67S2E&textFormat=plainText&part=snippet&maxResults=50&publishedAfter=2017-01-01T00:00:00Z&q=" + searchTerm + "&relevanceLanguage=en&topicId=/m/0bzvm2&type=video")
+    data = json.loads(response.content.decode('utf-8'))
+    
+    videoIdList = []
+    for i in data['items']:
+       videoIdList.append(i['id']['videoId'])
+    
+    videoDetails = data['items']
+    videoCount = len(videoIdList)
+    videoPageCount = 1
+    
+    if 'nextPageToken' in data:
+       videoPageToken = data['nextPageToken']
+    else:
+       videoPageToken = None
+    
+    # get remaining pages of search results for videos
+    while videoPageToken is not None:
+       response = requests.get("https://www.googleapis.com/youtube/v3/search?key=AIzaSyCBBfQKeEAbfdxl9NqhpVQeolErXN67S2E&textFormat=plainText&part=snippet&maxResults=50&publishedAfter=2017-01-01T00:00:00Z&q=" + searchTerm + "&relevanceLanguage=en&topicId=/m/0bzvm2&type=video&pageToken=" + videoPageToken)
+       data = json.loads(response.content.decode('utf-8'))
+       
+       for i in data['items']:
+          videoIdList.append(i['id']['videoId'])
+          videoDetails.append(i)
+          videoCount += 1
+       videoPageCount += 1
+       
+       if 'nextPageToken' in data:
+          videoPageToken = data['nextPageToken']
+       else:
+          videoPageToken = None   
+    
+    # get top-level comments from videos
+    commentDetails = []
+    commentCount = 0
+    
+    for videoId in videoIdList:
+        response = requests.get("https://www.googleapis.com/youtube/v3/commentThreads?key=AIzaSyCBBfQKeEAbfdxl9NqhpVQeolErXN67S2E&textFormat=plainText&part=snippet&videoId=" + videoId + "&maxResults=100")
+        data = json.loads(response.content.decode('utf-8'))
+        
+        if 'items' in data:
+            for i in data['items']:
+                 commentDetails.append(i)
+                 commentCount += 1
+        
+        if 'nextPageToken' in data:
+           commentPageToken = data['nextPageToken']
+        else:
+           commentPageToken = None
+        
+        # get remaining pages of comments for video
+        while commentPageToken is not None:
+           response = requests.get("https://www.googleapis.com/youtube/v3/commentThreads?key=AIzaSyCBBfQKeEAbfdxl9NqhpVQeolErXN67S2E&textFormat=plainText&part=snippet&videoId=" + videoId + "&maxResults=100&pageToken=" + commentPageToken)
+           data = json.loads(response.content.decode('utf-8'))
+           
+           if 'items' in data:
+              for i in data['items']:
+                  commentDetails.append(i)
+                  commentCount += 1
+           
+           if 'nextPageToken' in data:
+              commentPageToken = data['nextPageToken']
+           else:
+              commentPageToken = None
+    
+    return commentDetails
+
+darkSouls3Review = getYouTubeComments('dark souls 3 review')
+noMansSkyReview = getYouTubeComments('no man\'s sky review')
