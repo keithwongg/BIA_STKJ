@@ -3,6 +3,7 @@ import copy
 from yt_scrape_function import getYouTubeComments
 from yt_text_processing import basicPreprocessing
 
+
 # Scrape YouTube for comments of videos for search term "dark souls 3 review" (ds3r)
 data = getYouTubeComments('dark souls 3 review')
 ds3r_2k = data[:2000]
@@ -39,8 +40,9 @@ for i in ds3r_list:
     index = ds3r_list.index(i)
     i['textProcessed'] = ds3r_strings[index]
 
-with open('yt_darkSouls3_cleaned2k_new.json', 'w') as outfile:
+with open('yt_darkSouls3_cleaned2k.json', 'w') as outfile:
     json.dump(ds3r_list, outfile)
+
 
 # Scrape YouTube for comments of videos for search term "no man's sky review" (nmsr)
 data = getYouTubeComments('no man\'s sky review')
