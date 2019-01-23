@@ -1,0 +1,73 @@
+import json
+import copy
+from yt_scrape_function import getYouTubeComments
+from yt_text_processing import basicPreprocessing
+
+# Scrape YouTube for comments of videos for search term "dark souls 3 review" (ds3r)
+data = getYouTubeComments('dark souls 3 review')
+ds3r_2k = data[:2000]
+
+ds3r_list = []
+
+for i in ds3r_2k:
+    ds3r_list.append(i['snippet']['topLevelComment']['snippet'])
+    
+ds3r_copy = copy.deepcopy(ds3r_list)
+
+def keepImptInfo(copy, original):
+    for i in copy:
+        for key in i:
+            keysToKeep = ['likeCount', 'publishedAt', 'textDisplay', 'updatedAt', 'videoId']
+            if key not in keysToKeep:
+                for j in original:     
+                    if key in j:
+                        del j[key]
+
+keepImptInfo(ds3r_copy, ds3r_list)
+
+ds3r_comment_text = []
+for i in ds3r_list:
+    ds3r_comment_text.append(i['textDisplay'])
+
+ds3r_df_list = basicPreprocessing(ds3r_comment_text).values.tolist()
+
+ds3r_strings = []
+for i in ds3r_df_list:
+    ds3r_strings.append(i[0])
+
+for i in ds3r_list:
+    index = ds3r_list.index(i)
+    i['textProcessed'] = ds3r_strings[index]
+
+with open('yt_darkSouls3_cleaned2k_new.json', 'w') as outfile:
+    json.dump(ds3r_list, outfile)
+
+# Scrape YouTube for comments of videos for search term "no man's sky review" (nmsr)
+data = getYouTubeComments('no man\'s sky review')
+nmsr_2k = data[:2000]
+
+nmsr_list = []
+
+for i in nmsr_2k:
+    nmsr_list.append(i['snippet']['topLevelComment']['snippet'])
+    
+nmsr_copy = copy.deepcopy(nmsr_list)
+
+keepImptInfo(nmsr_copy, nmsr_list)
+
+nmsr_comment_text = []
+for i in nmsr_list:
+    nmsr_comment_text.append(i['textDisplay'])
+
+nmsr_df_list = basicPreprocessing(nmsr_comment_text).values.tolist()
+
+nmsr_strings = []
+for i in nmsr_df_list:
+    nmsr_strings.append(i[0])
+
+for i in nmsr_list:
+    index = nmsr_list.index(i)
+    i['textProcessed'] = nmsr_strings[index]
+
+with open('yt_noMansSky_cleaned2k.json', 'w') as outfile:
+    json.dump(nmsr_list, outfile)
