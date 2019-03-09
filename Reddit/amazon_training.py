@@ -76,6 +76,40 @@ X = vectorizer.transform(df_test['cleaned_text']).toarray()
 y = df_test['is_helpful'].values
 
 #############################################################################################
+#combine multiple models together, voting method
+from sklearn.model_selection import train_test_split
+
+#splitting into test and train set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33)
+
+#import relevant libraries
+from sklearn.ensemble import VotingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+#assigning classifier to variable
+model1 = LogisticRegression()
+model2 = RandomForestClassifier()
+model3 = GaussianNB()
+model4 = SVC()
+model5 = SGDClassifier()
+model6 = KNeighborsClassifier()
+model7 = DecisionTreeClassifier()
+
+#running voting method
+model = VotingClassifier(estimators=[('LR',model1), ('RF',model2), ('NB',model3),
+                                     ('SVC',model4), ('SGD',model5), ('KNN',model6),
+                                     ('DT',model7)
+                                     ], voting='hard')
+model.fit(X_train,y_train)
+model.score(X_test,y_test)
+
+#############################################################################################
 #model testing function for cross validation score
 def choose_model(model, X, y):
     from sklearn import model_selection
