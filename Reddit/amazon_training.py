@@ -88,7 +88,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
-from sklearn.linear_model import SGDClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -97,14 +96,13 @@ model1 = LogisticRegression()
 model2 = RandomForestClassifier()
 model3 = GaussianNB()
 model4 = SVC()
-model5 = SGDClassifier()
-model6 = KNeighborsClassifier()
-model7 = DecisionTreeClassifier()
+model5 = KNeighborsClassifier()
+model6 = DecisionTreeClassifier()
 
 #running voting method
 model = VotingClassifier(estimators=[('LR',model1), ('RF',model2), ('NB',model3),
-                                     ('SVC',model4), ('SGD',model5), ('KNN',model6),
-                                     ('DT',model7)
+                                     ('SVC',model4), ('KNN',model5),
+                                     ('DT',model6)
                                      ], voting='hard')
 model.fit(X_train,y_train)
 model.score(X_test,y_test)
@@ -134,7 +132,17 @@ from sklearn.linear_model import LogisticRegression
 classifier_LR = LogisticRegression()
 choose_model(classifier_LR, X, y)
 
+#Support Vector Classifier
+from sklearn.svm import SVC
+classifier_SVC = SVC()
+choose_model(classifier_SVC, X, y)
 
+#KNN
+from sklearn.neighbors import KNeighborsClassifier
+classifier_KNN = KNeighborsClassifier()
+choose_model(classifier_KNN, X, y)
 
-
-
+#Decision Tree
+from sklearn.tree import DecisionTreeClassifier
+classifier_DT = DecisionTreeClassifier()
+choose_model(classifier_DT, X, y)
