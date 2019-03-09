@@ -44,8 +44,8 @@ warnings.filterwarnings("ignore")
 df = pd.read_csv('amazon_dataset.csv')
 
 #extracting subset of dataset to pilot functions
-df_test = pd.concat([df[df['is_helpful']==1].sample(n=420),
-                     df[df['is_helpful']==0].sample(n=580)])
+df_test = pd.concat([df[df['is_helpful']==1].sample(n=4200),
+                     df[df['is_helpful']==0].sample(n=5800)])
 
 #preprocess list of words
 from text_processing import basic_preprocessing
@@ -65,6 +65,15 @@ y = df_test['is_helpful'].values
 from sklearn.feature_extraction.text import TfidfTransformer
 tfidfconverter = TfidfTransformer()
 X = tfidfconverter.fit_transform(X).toarray()
+
+#############################################################################################
+#Hasing vectorizer method
+from sklearn.feature_extraction.text import HashingVectorizer
+vectorizer = HashingVectorizer(n_features=1000)
+
+#encode words
+X = vectorizer.transform(df_test['cleaned_text']).toarray()
+y = df_test['is_helpful'].values
 
 #############################################################################################
 #model testing function for cross validation score

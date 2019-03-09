@@ -9,7 +9,7 @@ def basic_preprocessing(df):
     #from spellchecker import SpellChecker
     
     #changing all words to lower case
-    df['words'] = df['words'].apply(lambda x: " ".join(x.lower() for x in x.split()))
+    df['words'] = df['words'].apply(lambda x: " ".join(x.lower() for x in str(x).split()))
     
     #removal of URL
     df['words'] = df['words'].apply(lambda x: " ".join(re.sub(r"http\S+", "", x) for x in x.split()))
