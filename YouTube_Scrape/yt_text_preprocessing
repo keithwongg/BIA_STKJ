@@ -1,41 +1,29 @@
-#importing libraries
-import pandas as pd
-from nltk.corpus import stopwords
-from textblob import TextBlob
-from textblob import Word
+# Import libraries
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+import re
+import string
 
-#argument words have to be a list of strings
-def basicPreprocessing(words):    
+# Input string
+def preProcessing(words):
     
-    #saving as DataFrame, and renaming column to 'words'
-    df = pd.DataFrame(words)
-    df.columns=['words']
+    # Change all to lowercase
+    words = words.lower()
     
-    #changing all words to lower case
-    df['words'] = df['words'].apply(lambda x: " ".join(x.lower() for x in x.split()))
+    # Remove punctuation
+    translator = re.compile('[%s]' % re.escape(string.punctuation))
+    words = translator.sub(' ', words)
     
-    #removing punctuation
-    df['words'] = df['words'].str.replace('[^\w\s]','')
+    # Remove URLs
+    words = re.sub(r"http\S+", "", words)
     
-    #removal of stopwords
-    stop = stopwords.words('english')
-    df['words'] = df['words'].apply(lambda x: ' '.join(x for x in x.split() if x not in stop))
-    
-    #common word removal (top 10 most frequently occuring words)
-    freq = pd.Series(' '.join(df['words']).split()).value_counts()[:10]
-    freq = list(freq.index)
-    df['words'] = df['words'].apply(lambda x: ' '.join(x for x in x.split() if x not in freq))
-    
-    #rare word removal (bottom 10 most frequently occuring words)
-    freq = pd.Series(' '.join(df['words']).split()).value_counts()[-10:]
-    freq = list(freq.index)
-    df['words'] = df['words'].apply(lambda x: ' '.join(x for x in x.split() if x not in freq))
-    
-    #spelling correction
-    df['words'] = df['words'].apply(lambda x: str(TextBlob(x).correct()))
-    
-    #lemmatization
-    #preferred over stemming as it converts words into root words rather than just removing suffices
-    df['words'] = df['words'].apply(lambda x: " ".join([Word(word).lemmatize() for word in x.split()]))
-    
-    return df
+    # Tokenize
+    words = word_tokenize(words)
+
+    # Lemmatize
+    lemmatizer = WordNetLemmatizer()
+    new_words = []
+    for i in words:
+        new_words.append(lemmatizer.lemmatize(i))
+
+    return new_words
