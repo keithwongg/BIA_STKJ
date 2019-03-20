@@ -1,0 +1,142 @@
+import pandas as pd
+import gzip
+
+def parse(path):
+  g = gzip.open(path, 'rb')
+  for l in g:
+    yield eval(l)
+
+def getDF(path):
+  i = 0
+  df = {}
+  for d in parse(path):
+    df[i] = d
+    i += 1
+  return pd.DataFrame.from_dict(df, orient='index')
+
+df = getDF('reviews_Video_Games_5.json.gz')
+
+df_amazon_edit = df.drop(columns=['reviewerID','asin','reviewerName',
+                                         'unixReviewTime','reviewTime'])
+def num_extractor_0(x):
+    value = x[0]
+    return value
+    
+def num_extractor_1(x):
+    value = x[-1]
+    return value
+    
+df_amazon_edit['value_0'] = df_amazon_edit['helpful'].apply(num_extractor_0)
+df_amazon_edit['value_1'] = df_amazon_edit['helpful'].apply(num_extractor_1)
+
+df_amazon_edit.drop(columns='helpful',inplace=True)
+
+df_1 = df_amazon_edit[df_amazon_edit['value_1']==0]
+df_1['helpful_value'] = df_amazon_edit['value_1']
+
+df_2 = df_amazon_edit[df_amazon_edit['value_1']!=0]
+df_2['helpful_value'] = df_2['value_0']/df_2['value_1']
+
+df_amazon_edit = pd.concat([df_1,df_2])
+
+df_amazon_edit.sort_index(inplace=True)
+
+is_helpful = []
+
+for row in df_amazon_edit['helpful_value']:
+    if row < 0.5:
+        is_helpful.append(0)
+    else:
+        is_helpful.append(1)
+
+# Append values as new column in data frame
+df_amazon_edit['is_helpful'] = is_helpful
+
+amazon_dict = df_amazon_edit['reviewText'].to_dict()
+comments_list = []
+for i in amazon_dict:
+    comments_list.append(amazon_dict[i])
+
+# Extract subset of dataset to pilot functions
+df_test = pd.concat([df_amazon_edit[df_amazon_edit['is_helpful']==1].sample(n=4200),
+                     df_amazon_edit[df_amazon_edit['is_helpful']==0].sample(n=5800)])
+
+from Text_processing import preProcessing
+
+# With text processing
+processedText = []
+for i in df_test['reviewText']:
+    processedText.append(str(preProcessing(i)))
+
+df_test['cleanedText'] = processedText
+
+# Without text processing (Only to form bigrams)
+import nltk
+from nltk.tokenize import word_tokenize
+bigramText = []
+for i in df_test['reviewText']:
+    i = word_tokenize(i)
+    bigramText.append(str(list(nltk.bigrams(i))))
+
+df_test['bigrams'] = bigramText
+
+# Without text processing (Only to form trigrams)
+trigramText = []
+for i in df_test['reviewText']:
+    i = word_tokenize(i)
+    trigramText.append(str(list(nltk.trigrams(i))))
+
+df_test['trigrams'] = trigramText
+
+#################################################################################
+
+# EITHER RUN THIS OR HASHING METHOD
+# tf-idf method
+# count vectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+vectorizer = CountVectorizer(min_df=0, lowercase=False)
+
+# Create x and y variables for machine learning
+x = vectorizer.fit_transform(df_test['bigrams']).toarray()
+y = df_test['is_helpful'].values
+
+# Convert to tf-idf values
+from sklearn.feature_extraction.text import TfidfTransformer
+tfidfconverter = TfidfTransformer()
+x = tfidfconverter.fit_transform(x).toarray()
+
+#############################################################################################
+
+# Hashing vectorizer method
+from sklearn.feature_extraction.text import HashingVectorizer
+vectorizer = HashingVectorizer(n_features=1000)
+
+# Encode words
+x = vectorizer.transform(df_test['bigrams']).toarray()
+y = df_test['is_helpful'].values
+
+###################################################################################
+
+# Model testing function for cross validation score
+def choose_model(model, x, y):
+    from sklearn import model_selection
+    
+    kfold = model_selection.KFold(n_splits=10, random_state=0)
+    cv_results = model_selection.cross_val_score(model, x, y, cv=kfold, scoring='accuracy')
+    print('This model has mean accuracy of',
+          str(cv_results.mean()), 'and standard deviation of', str(cv_results.std()))
+    
+# Gaussian Naive Bayes
+from sklearn.naive_bayes import GaussianNB
+classifier_NB = GaussianNB()
+choose_model(classifier_NB, x, y)
+
+# Random forest classifier
+from sklearn.ensemble import RandomForestClassifier
+classifier_RF = RandomForestClassifier(n_estimators = 10)
+choose_model(classifier_RF, x, y)
+
+# Logistic regression
+from sklearn.linear_model import LogisticRegression
+classifier_LR = LogisticRegression(solver = 'liblinear')
+choose_model(classifier_LR, x, y)
